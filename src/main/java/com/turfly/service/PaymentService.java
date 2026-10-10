@@ -13,12 +13,15 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.*;
 import org.springframework.web.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.*;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
     private final BookingRepository bookingRepository;
     private final BookingService bookingService;
     private final ObjectMapper objectMapper;
@@ -64,13 +67,23 @@ public class PaymentService {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED).body(form).retrieve().body(String.class);
             JsonNode json = objectMapper.readTree(response == null ? "{}" : response);
             String gatewayUrl = json.path("GatewayPageURL").asText();
-            if (!"SUCCESS".equalsIgnoreCase(json.path("status").asText()) || gatewayUrl.isBlank())
-                throw new BadRequestException("SSLCommerz checkout could not be created");
+            String status = json.path("status").asText();
+            if (!"SUCCESS".equalsIgnoreCase(status) || gatewayUrl.isBlank()) {
+                String reason = json.path("failedreason").asText();
+                if (reason.isBlank()) reason = json.path("error").asText();
+                log.warn("SSLCommerz checkout rejected: status={}, reason={}", status, reason);
+                throw new BadRequestException(reason.isBlank()
+                    ? "SSLCommerz checkout could not be created"
+                    : "SSLCommerz rejected the checkout: " + reason);
+            }
             booking.setPaymentTransactionId(transactionId);
             bookingRepository.save(booking);
             return new CheckoutResponse(gatewayUrl, false);
         } catch (BadRequestException ex) { throw ex; }
-        catch (Exception ex) { throw new BadRequestException("SSLCommerz checkout could not be created"); }
+        catch (Exception ex) {
+            log.error("SSLCommerz checkout request failed: {}", ex.getMessage());
+            throw new BadRequestException("SSLCommerz checkout could not be created. Please try again.");
+        }
     }
 
     public void completeDemo(String bookingId, User user) {
