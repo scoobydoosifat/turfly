@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: { '/api': 'http://localhost:9091' }
   },
   build: {
-    outDir: '../src/main/resources/static',
+    outDir: process.env.VERCEL ? 'dist' : '../src/main/resources/static',
     emptyOutDir: true
   }
 })
