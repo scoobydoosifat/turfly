@@ -90,8 +90,10 @@ public class PaymentService {
         boolean paid = "success".equals(outcome) && processPayment(params);
         String id = bookingId(params);
         if ("success".equals(outcome) && id != null && paid)
-            return frontendUrl + "/payment/success?bookingId=" + id;
-        return frontendUrl + "/dashboard?payment=" + ("success".equals(outcome) ? "pending" : outcome);
+            return frontendUrl + "/payment/result?status=success&bookingId=" + id;
+        if ("success".equals(outcome))
+            return frontendUrl + "/payment/result?status=failed&reason=verification&bookingId=" + (id == null ? "" : id);
+        return frontendUrl + "/payment/result?status=failed&reason=" + outcome + "&bookingId=" + (id == null ? "" : id);
     }
 
     private boolean processPayment(MultiValueMap<String, String> params) {

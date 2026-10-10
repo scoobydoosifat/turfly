@@ -384,6 +384,14 @@ th { color: var(--muted); font-size: 8px; letter-spacing: 1px; text-transform: u
 td small { display: block; margin-top: 4px; color: var(--muted); }
 .payment-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 20px; color: var(--muted); background: var(--surface-2); font-size: 8px; font-weight: 800; letter-spacing: .5px; }
 .payment-pill svg { width: 12px; height: 12px; }
+.payment-result-page { background: radial-gradient(circle at 50% 20%, rgba(207,255,70,.08), transparent 35%), var(--bg); }
+.payment-result-card { max-width: 560px; text-align: center; }
+.payment-result-card > svg { width: 70px; height: 70px; margin: 0 auto 22px; color: var(--lime); }
+.payment-result-card.payment-failed > svg { color: var(--danger); }
+.payment-result-card .eyebrow { justify-content: center; }
+.payment-result-card > p:not(.eyebrow) { max-width: 430px; margin-inline: auto; }
+.payment-pending-note { width: fit-content; margin: 0 auto 26px; padding: 10px 14px; border: 1px solid rgba(207,255,70,.2); border-radius: 99px; display: inline-flex; align-items: center; gap: 8px; color: var(--lime); background: rgba(207,255,70,.08); font-size: 11px; font-weight: 800; }
+.payment-pending-note svg { animation: spin .9s linear infinite; }
 .payment-pill.paid { color: var(--lime); background: rgba(207,255,70,.12); }
 .booking-actions { display: flex; align-items: center; gap: 7px; }
 .booking-actions button { min-height: 34px; padding: 0 11px; border: 1px solid; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; background: transparent; font-size: 10px; font-weight: 800; cursor: pointer; }

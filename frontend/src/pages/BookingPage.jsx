@@ -63,7 +63,12 @@ export default function BookingPage() {
       if (checkout.demoMode) {
         await api(`/api/payments/demo-complete/${booking.id}`, { method: 'POST' })
         navigate('/payment/success')
-      } else window.location.assign(checkout.checkoutUrl)
+      } else {
+        // Open the hosted SSLCommerz checkout from the user's click. If the browser
+        // blocks a popup, fall back to the same-tab flow so payment still works.
+        const paymentWindow = window.open(checkout.checkoutUrl, 'turfly_sslcommerz_checkout', 'popup,width=520,height=760,resizable=yes,scrollbars=yes')
+        if (!paymentWindow) window.location.assign(checkout.checkoutUrl)
+      }
     } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
 

@@ -10,6 +10,7 @@ import PasswordPage from './pages/PasswordPage'
 import Dashboard from './pages/Dashboard'
 import Admin from './pages/Admin'
 import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentResult from './pages/PaymentResult'
 import ContactPage from './pages/ContactPage'
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
     '/forgot-password': <PasswordPage />,
     '/reset-password': <PasswordPage reset />,
     '/payment/success': <PaymentSuccess />,
+    '/payment/result': <PaymentResult />,
     '/dashboard': <ProtectedRoute><Dashboard /></ProtectedRoute>,
     '/admin': <ProtectedRoute admin><Admin /></ProtectedRoute>,
   }
