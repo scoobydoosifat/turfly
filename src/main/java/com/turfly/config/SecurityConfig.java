@@ -57,12 +57,22 @@ public class SecurityConfig {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(@Value("${app.frontend-url}") String frontendUrl) {
+        CorsConfiguration paymentCallbacks = new CorsConfiguration();
+        paymentCallbacks.setAllowedOriginPatterns(List.of("*"));
+        paymentCallbacks.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        paymentCallbacks.setAllowedHeaders(List.of("*"));
+        paymentCallbacks.setAllowCredentials(false);
+
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // SSLCommerz submits these public callbacks from its own hosted checkout.
+        // Payment details are still verified server-to-server before a booking is marked paid.
+        source.registerCorsConfiguration("/api/payments/sslcommerz/**", paymentCallbacks);
         source.registerCorsConfiguration("/**", config);
         return source;
     }
