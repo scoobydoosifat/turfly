@@ -3,7 +3,9 @@ package com.turfly.service;
 import com.turfly.dto.AuthDtos.*;
 import com.turfly.enums.Role;
 import com.turfly.exception.*;
+import com.turfly.model.RegistrationVerification;
 import com.turfly.model.User;
+import com.turfly.repository.RegistrationVerificationRepository;
 import com.turfly.repository.UserRepository;
 import com.turfly.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -21,26 +23,75 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final SecureRandom OTP_RANDOM = new SecureRandom();
+    private static final int OTP_EXPIRY_SECONDS = 600;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+
     private final UserRepository userRepository;
+    private final RegistrationVerificationRepository verificationRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final MailService mailService;
 
-    public AuthResponse register(RegisterRequest request) {
+    public MessageResponse requestRegistrationOtp(RegisterRequest request) {
         String email = normalize(request.email());
         if (userRepository.existsByEmailIgnoreCase(email))
             throw new ConflictException("An account already exists for this email");
 
-        User user = User.builder()
+        String otp = String.format("%06d", OTP_RANDOM.nextInt(1_000_000));
+        RegistrationVerification verification = RegistrationVerification.builder()
             .name(request.name().trim())
             .email(email)
             .phone(request.phone().trim())
-            .password(passwordEncoder.encode(request.password()))
+            .passwordHash(passwordEncoder.encode(request.password()))
+            .otpHash(hash(email + ":" + otp))
+            .expiresAt(Instant.now().plusSeconds(OTP_EXPIRY_SECONDS))
+            .attempts(0)
+            .build();
+        verificationRepository.save(verification);
+        try {
+            mailService.sendRegistrationOtp(email, otp);
+        } catch (RuntimeException ex) {
+            verificationRepository.deleteById(email);
+            throw ex;
+        }
+        return new MessageResponse("A 6-digit verification code was sent to " + email);
+    }
+
+    public AuthResponse verifyRegistration(RegistrationVerificationRequest request) {
+        String email = normalize(request.email());
+        RegistrationVerification verification = verificationRepository.findById(email)
+            .orElseThrow(() -> new BadRequestException("Request a new verification code first"));
+
+        if (verification.getExpiresAt() == null || Instant.now().isAfter(verification.getExpiresAt())) {
+            verificationRepository.deleteById(email);
+            throw new BadRequestException("The verification code has expired. Request a new code");
+        }
+        if (!verification.getOtpHash().equals(hash(email + ":" + request.otp()))) {
+            verification.setAttempts(verification.getAttempts() + 1);
+            if (verification.getAttempts() >= MAX_OTP_ATTEMPTS) {
+                verificationRepository.deleteById(email);
+                throw new BadRequestException("Too many incorrect attempts. Request a new code");
+            }
+            verificationRepository.save(verification);
+            throw new BadRequestException("The verification code is incorrect");
+        }
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            verificationRepository.deleteById(email);
+            throw new ConflictException("An account already exists for this email");
+        }
+
+        User user = User.builder()
+            .name(verification.getName())
+            .email(email)
+            .phone(verification.getPhone())
+            .password(verification.getPasswordHash())
             .role(Role.USER)
             .enabled(true)
             .build();
         userRepository.save(user);
+        verificationRepository.deleteById(email);
         return new AuthResponse(jwtService.generate(user), DtoMapper.user(user));
     }
 

@@ -13,6 +13,11 @@ public final class AuthDtos {
         @NotBlank @Size(min = 8, max = 72) String password
     ) { }
 
+    public record RegistrationVerificationRequest(
+        @NotBlank @Email @Size(max = 180) String email,
+        @NotBlank @Pattern(regexp = "^[0-9]{6}$", message = "Enter the 6-digit verification code") String otp
+    ) { }
+
     public record LoginRequest(
         @NotBlank @Email String email,
         @NotBlank String password

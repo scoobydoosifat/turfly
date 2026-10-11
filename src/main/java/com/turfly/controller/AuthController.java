@@ -16,9 +16,14 @@ public class AuthController {
     private final CurrentUser currentUser;
 
     @PostMapping("/register")
+    public MessageResponse register(@RequestBody @Valid RegisterRequest request) {
+        return authService.requestRegistrationOtp(request);
+    }
+
+    @PostMapping("/register/verify")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse register(@RequestBody @Valid RegisterRequest request) {
-        return authService.register(request);
+    public AuthResponse verifyRegistration(@RequestBody @Valid RegistrationVerificationRequest request) {
+        return authService.verifyRegistration(request);
     }
 
     @PostMapping("/login")

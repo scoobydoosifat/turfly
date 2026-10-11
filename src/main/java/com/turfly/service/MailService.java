@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.Map;
 
 @Service
@@ -26,6 +25,29 @@ public class MailService {
     @Value("${app.brevo.sender-email:}") private String brevoSenderEmail;
     @Value("${app.brevo.sender-name:Turfly}") private String brevoSenderName;
 
+    public void sendRegistrationOtp(String email, String otp) {
+        if (!enabled && brevoApiKey.isBlank()) {
+            log.info("Turfly development registration code for {}: {}", email, otp);
+            return;
+        }
+
+        String subject = "Your Turfly verification code";
+        String text = "Your Turfly verification code is " + otp
+            + ". It expires in 10 minutes. If you did not request it, ignore this email.";
+        String html = "<div style=\"font-family:Arial,sans-serif;line-height:1.6\">"
+            + "<h2>Verify your Turfly account</h2>"
+            + "<p>Enter this code to finish creating your account:</p>"
+            + "<p style=\"font-size:30px;font-weight:bold;letter-spacing:8px;color:#234d35\">" + otp + "</p>"
+            + "<p>This code expires in 10 minutes. If you did not request it, you can ignore this email.</p></div>";
+
+        if (useBrevo()) {
+            sendWithBrevo(email, subject, html, text, "The verification email could not be sent. Please try again shortly.");
+            return;
+        }
+
+        sendWithSmtp(email, subject, text);
+    }
+
     public void sendPasswordReset(String email, String token) {
         String resetLink = frontendUrl + "/reset-password?token=" + token;
         if (!enabled && brevoApiKey.isBlank()) {
@@ -33,23 +55,31 @@ public class MailService {
             return;
         }
 
-        boolean useBrevo = "brevo".equalsIgnoreCase(provider)
-            || ("auto".equalsIgnoreCase(provider) && !brevoApiKey.isBlank());
-        if (useBrevo) {
-            sendWithBrevo(email, resetLink);
+        if (useBrevo()) {
+            sendPasswordResetWithBrevo(email, resetLink);
             return;
         }
 
+        sendWithSmtp(email, "Reset your Turfly password", "Use this link to reset your Turfly password:\n\n"
+            + resetLink + "\n\nThe link expires in 30 minutes. If you did not request it, ignore this email.");
+    }
+
+    private boolean useBrevo() {
+        return "brevo".equalsIgnoreCase(provider)
+            || ("auto".equalsIgnoreCase(provider) && !brevoApiKey.isBlank());
+    }
+
+    private void sendWithSmtp(String email, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         if (from != null && !from.isBlank()) message.setFrom(from);
         message.setTo(email);
-        message.setSubject("Reset your Turfly password");
-        message.setText("Use this link to reset your Turfly password:\n\n" + resetLink
-            + "\n\nThe link expires in 30 minutes. If you did not request it, ignore this email.");
+        message.setSubject(subject);
+        message.setText(text);
         mailSender.send(message);
     }
 
-    private void sendWithBrevo(String email, String resetLink) {
+    private void sendPasswordResetWithBrevo(String email, String resetLink) {
+        String subject = "Reset your Turfly password";
         if (brevoApiKey.isBlank()) {
             throw new IllegalStateException("Brevo email is not configured. Set BREVO_API_KEY on the backend.");
         }
@@ -62,12 +92,23 @@ public class MailService {
             + "<p>We received a request to reset your Turfly password.</p>"
             + "<p><a href=\"" + resetLink + "\" style=\"background:#cfff46;color:#071b13;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:bold\">Reset password</a></p>"
             + "<p>This link expires in 30 minutes. If you did not request it, you can ignore this email.</p></div>";
+        sendWithBrevo(email, subject, html, "Reset your Turfly password: " + resetLink,
+            "The password-reset email could not be sent. Please try again shortly.");
+    }
+
+    private void sendWithBrevo(String email, String subject, String html, String text, String failureMessage) {
+        if (brevoApiKey.isBlank()) {
+            throw new IllegalStateException("Brevo email is not configured. Set BREVO_API_KEY on the backend.");
+        }
+        if (brevoSenderEmail.isBlank()) {
+            throw new IllegalStateException("Brevo email is not configured. Set BREVO_SENDER_EMAIL on the backend.");
+        }
         Map<String, Object> body = Map.of(
             "sender", Map.of("name", brevoSenderName, "email", brevoSenderEmail),
             "to", new Object[]{Map.of("email", email)},
-            "subject", "Reset your Turfly password",
+            "subject", subject,
             "htmlContent", html,
-            "textContent", "Reset your Turfly password: " + resetLink
+            "textContent", text
         );
 
         try {
@@ -80,8 +121,8 @@ public class MailService {
                 .retrieve()
                 .toBodilessEntity();
         } catch (Exception ex) {
-            log.error("Brevo password-reset email failed for {}", email, ex);
-            throw new IllegalStateException("The password-reset email could not be sent. Please try again shortly.", ex);
+            log.error("Brevo transactional email failed for {}", email, ex);
+            throw new IllegalStateException(failureMessage, ex);
         }
     }
 }
