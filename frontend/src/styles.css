@@ -332,6 +332,11 @@ form textarea { min-height: 105px; resize: vertical; }
 .panel header p { margin: 0; color: var(--muted); font-size: 11px; }
 .profile-panel form { padding: 25px; }
 .profile-panel input:disabled { background: var(--surface-2); color: var(--muted); }
+.account-danger { margin: 0 25px 25px; padding: 18px; border: 1px solid rgba(255,133,128,.2); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: rgba(255,133,128,.05); }
+.account-danger strong { display: block; margin-bottom: 4px; font-size: 12px; }
+.account-danger p, .delete-password-copy { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.account-danger .button { flex: 0 0 auto; }
+.delete-password-copy { margin-bottom: 20px; }
 .booking-list article { padding: 21px 25px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 55px 1fr auto; gap: 18px; align-items: center; }
 .booking-date { height: 55px; border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--forest); color: #fff; }
 .booking-date strong { font-size: 20px; }

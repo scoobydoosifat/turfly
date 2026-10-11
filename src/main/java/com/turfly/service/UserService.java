@@ -30,6 +30,16 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void verifyPassword(User user, DeleteAccountRequest request) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword()))
+            throw new BadRequestException("Password is incorrect");
+    }
+
+    public void deleteAccount(User user, DeleteAccountRequest request) {
+        verifyPassword(user, request);
+        userRepository.delete(user);
+    }
+
     public List<UserResponse> list() {
         return userRepository.findAll().stream().map(DtoMapper::user).toList();
     }

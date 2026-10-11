@@ -14,4 +14,8 @@ public final class UserDtos {
         @NotBlank String currentPassword,
         @NotBlank @Size(min = 8, max = 72) String newPassword
     ) { }
+
+    public record DeleteAccountRequest(
+        @NotBlank String password
+    ) { }
 }

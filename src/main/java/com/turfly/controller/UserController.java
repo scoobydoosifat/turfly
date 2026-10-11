@@ -26,4 +26,16 @@ public class UserController {
     public void password(@RequestBody @Valid PasswordChangeRequest request, Authentication auth) {
         userService.changePassword(currentUser.from(auth), request);
     }
+
+    @PostMapping("/me/verify-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void verifyPassword(@RequestBody @Valid DeleteAccountRequest request, Authentication auth) {
+        userService.verifyPassword(currentUser.from(auth), request);
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(@RequestBody @Valid DeleteAccountRequest request, Authentication auth) {
+        userService.deleteAccount(currentUser.from(auth), request);
+    }
 }
