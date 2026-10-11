@@ -286,6 +286,7 @@ h1, h2, h3, .brand { font-family: 'Space Grotesk', sans-serif; }
 .booking-summary input { width: 100%; height: 46px; margin: 7px 0 15px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: rgba(255,255,255,.08); color: #fff; outline: 0; }
 .secure-note { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 6px; color: rgba(255,255,255,.42); font-size: 9px; }
 .form-note { padding: 10px; border-radius: 6px; background: var(--lime-soft); color: var(--ink); font-size: 11px; }
+.form-note.form-error { border: 1px solid rgba(255, 133, 128, .32); background: rgba(255, 133, 128, .12); color: #ffaaa6; }
 
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: 1.08fr .92fr; background: var(--surface); color: var(--ink); }
 .auth-visual { min-height: 100vh; padding: 48px 7vw; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(rgba(3,24,16,.2), rgba(3,24,16,.92)), url('/images/pitch-football.png') center/cover; color: #fff; }
