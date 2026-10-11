@@ -36,9 +36,11 @@ public class SecurityConfig {
                     "/reset-password", "/dashboard", "/admin", "/payment/success", "/error",
                     "/api/auth/**", "/api/health", "/api/public/**",
                     "/api/contact", "/api/ai/ask",
+                    "/api/reviews/pitch/**",
                     "/api/payments/sslcommerz/ipn", "/api/payments/sslcommerz/success",
                     "/api/payments/sslcommerz/fail", "/api/payments/sslcommerz/cancel").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/pitches/**", "/api/bookings/availability").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/pitches/**", "/api/bookings/availability",
+                    "/api/bookings/availability-calendar").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

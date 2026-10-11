@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 class BookingServiceTest {
     @Mock BookingRepository bookingRepository;
     @Mock PitchService pitchService;
+    @Mock CouponService couponService;
     @InjectMocks BookingService bookingService;
 
     private Pitch pitch;
@@ -33,6 +34,8 @@ class BookingServiceTest {
             .pricePerHour(new BigDecimal("1800")).build();
         user = User.builder().id("user-1").name("Sifat").email("sifat@example.com")
             .role(Role.USER).enabled(true).build();
+        lenient().when(couponService.calculate(nullable(String.class), any(BigDecimal.class)))
+            .thenReturn(new CouponService.Discount(null, BigDecimal.ZERO));
     }
 
     @Test
@@ -48,7 +51,7 @@ class BookingServiceTest {
         });
 
         var result = bookingService.create(
-            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(19, 0), "013089557984"), user);
+            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(19, 0), "013089557984", null), user);
 
         assertThat(result.id()).isEqualTo("booking-1");
         assertThat(result.endTime()).isEqualTo(LocalTime.of(20, 30));
@@ -71,7 +74,7 @@ class BookingServiceTest {
         });
 
         var result = bookingService.create(
-            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(19, 0), "013089557984"), user);
+            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(19, 0), "013089557984", null), user);
 
         assertThat(result.status()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.UNPAID);
@@ -85,7 +88,7 @@ class BookingServiceTest {
             "pitch-1", tomorrow, LocalTime.of(20, 30), BookingStatus.CANCELLED)).thenReturn(true);
 
         assertThatThrownBy(() -> bookingService.create(
-            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(20, 30), "013089557984"), user))
+            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(20, 30), "013089557984", null), user))
             .isInstanceOf(ConflictException.class)
             .hasMessageContaining("just booked");
         verify(bookingRepository, never()).save(any());
@@ -104,6 +107,39 @@ class BookingServiceTest {
         assertThat(result.slots()).allMatch(slot -> slot.available());
         assertThat(result.slots().getFirst().startTime()).isEqualTo(LocalTime.of(7, 0));
         assertThat(result.slots().getLast().endTime()).isEqualTo(LocalTime.of(1, 0));
+    }
+
+    @Test
+    void returnsSevenDayAvailabilityCalendar() {
+        LocalDate tomorrow = LocalDate.now(ZoneId.of("Asia/Dhaka")).plusDays(1);
+        when(pitchService.entity("pitch-1")).thenReturn(pitch);
+        when(bookingRepository.existsByPitchIdAndBookingDateAndStartTimeAndStatusNot(
+            anyString(), any(), any(), any())).thenReturn(false);
+
+        var result = bookingService.availabilityCalendar("pitch-1", tomorrow, 7);
+
+        assertThat(result.days()).hasSize(7);
+        assertThat(result.days().getFirst().date()).isEqualTo(tomorrow);
+        assertThat(result.days().getLast().date()).isEqualTo(tomorrow.plusDays(6));
+    }
+
+    @Test
+    void appliesCouponToNewBooking() {
+        LocalDate tomorrow = LocalDate.now(ZoneId.of("Asia/Dhaka")).plusDays(1);
+        when(pitchService.entity("pitch-1")).thenReturn(pitch);
+        when(bookingRepository.existsByPitchIdAndBookingDateAndStartTimeAndStatusNot(
+            "pitch-1", tomorrow, LocalTime.of(19, 0), BookingStatus.CANCELLED)).thenReturn(false);
+        when(couponService.calculate("PLAY10", new BigDecimal("2700")))
+            .thenReturn(new CouponService.Discount("PLAY10", new BigDecimal("270")));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = bookingService.create(
+            new CreateBookingRequest("pitch-1", tomorrow, LocalTime.of(19, 0), "013089557984", "PLAY10"), user);
+
+        assertThat(result.originalAmount()).isEqualByComparingTo("2700");
+        assertThat(result.discountAmount()).isEqualByComparingTo("270");
+        assertThat(result.amount()).isEqualByComparingTo("2430");
+        assertThat(result.couponCode()).isEqualTo("PLAY10");
     }
 
     @Test

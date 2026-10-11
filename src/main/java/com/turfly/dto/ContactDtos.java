@@ -1,5 +1,6 @@
 package com.turfly.dto;
 
+import com.turfly.enums.MessageStatus;
 import jakarta.validation.constraints.*;
 
 import java.time.Instant;
@@ -17,7 +18,12 @@ public final class ContactDtos {
 
     public record ContactResponse(
         String id, String name, String email, String phone, String subject,
-        String message, boolean resolved, Instant createdAt
+        String message, boolean resolved, MessageStatus status, String adminNote, Instant createdAt
+    ) { }
+
+    public record MessageUpdateRequest(
+        @NotNull MessageStatus status,
+        @Size(max = 1000) String adminNote
     ) { }
 
     public record PublicInfoResponse(String phone, String email, String address) { }

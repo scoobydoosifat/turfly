@@ -19,10 +19,16 @@ const amenities = [
 
 export default function Home() {
   const [pitches, setPitches] = useState(demoPitches)
+  const [ratings, setRatings] = useState({})
   useEffect(() => {
     let mounted = true
     const refreshPitches = () => api('/api/pitches', { cache: 'no-store' })
-      .then((data) => mounted && data.length && setPitches(data))
+      .then((data) => {
+        if (!mounted || !data.length) return
+        setPitches(data)
+        Promise.all(data.slice(0, 3).map((pitch) => api(`/api/reviews/pitch/${pitch.id}`).catch(() => null)))
+          .then((items) => mounted && setRatings(Object.fromEntries(items.filter(Boolean).map((item) => [item.pitchId, item]))))
+      })
       .catch(() => {})
     refreshPitches()
     window.addEventListener('focus', refreshPitches)
@@ -103,7 +109,7 @@ export default function Home() {
             <Link className="card-image-link" to={`/book?pitch=${pitch.id}`}><ArrowRight /></Link>
           </div>
           <div className="pitch-card-body">
-            <div><div><small>{pitch.capacity} PLAYERS · FLOODLIT</small><h3>{pitch.name}</h3></div><p><MapPin size={14} /> {pitch.location}</p></div>
+            <div><div><small>{pitch.capacity} PLAYERS · FLOODLIT</small><h3>{pitch.name}</h3>{ratings[pitch.id]?.reviewCount > 0 && <span className="pitch-rating"><Star /> {ratings[pitch.id].averageRating} <small>({ratings[pitch.id].reviewCount})</small></span>}</div><p><MapPin size={14} /> {pitch.location}</p></div>
             <p>{pitch.description}</p>
             <div className="feature-row">{pitch.features?.slice(0, 3).map((feature) => <span key={feature}><Check size={13} />{feature}</span>)}</div>
             <div className="card-bottom"><p>From <strong>{money(pitch.pricePerHour)}</strong><small>/ hour</small></p><Link to={`/book?pitch=${pitch.id}`}>View live slots <ArrowRight size={16} /></Link></div>

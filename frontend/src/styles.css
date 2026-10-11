@@ -456,6 +456,68 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .contact-form { padding: 40px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
 .contact-form textarea { min-height: 165px; }
 
+/* Booking calendar and coupons */
+.availability-calendar { margin-bottom: 14px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.availability-calendar button { min-height: 92px; padding: 10px 6px; border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--surface); color: var(--ink); cursor: pointer; transition: transform .2s, border-color .2s, background .2s; }
+.availability-calendar button:hover { transform: translateY(-3px); border-color: rgba(207,255,70,.35); }
+.availability-calendar button.selected { border-color: var(--lime); background: var(--lime-soft); }
+.availability-calendar span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.availability-calendar strong { font-size: 20px; }
+.availability-calendar small { color: var(--lime); font-size: 8px; }
+.coupon-box { margin-bottom: 15px; padding: 13px; border: 1px solid rgba(207,255,70,.15); border-radius: 9px; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 9px; background: rgba(207,255,70,.04); }
+.coupon-box label { margin: 0; }
+.coupon-box label > svg { width: 14px; margin-right: 6px; vertical-align: middle; color: var(--lime); }
+.coupon-box input { margin-bottom: 0; }
+.coupon-box .button { min-height: 46px; padding-inline: 14px; border-color: rgba(207,255,70,.22); color: var(--lime); }
+
+/* Player dashboard additions */
+.booking-filters, .admin-filters { padding: 15px 24px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
+.booking-filters label, .admin-filters label { position: relative; margin: 0; }
+.booking-filters label svg, .admin-filters label svg { position: absolute; z-index: 1; left: 12px; top: 50%; width: 15px; transform: translateY(-50%); color: var(--muted); }
+.booking-filters input, .admin-filters input, .booking-filters select, .admin-filters select { width: 100%; min-height: 43px; margin: 0; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--ink); outline: 0; }
+.booking-filters input, .admin-filters input { padding-left: 36px; }
+.coupon-used { display: inline-flex; margin-top: 6px; padding: 4px 7px; border-radius: 20px; background: rgba(207,255,70,.1); color: var(--lime); font-size: 8px; }
+.booking-card-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.booking-status .booking-card-actions button { min-height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: var(--surface-2); }
+.booking-card-actions button:hover { border-color: rgba(207,255,70,.3); color: var(--lime); }
+.booking-card-actions svg { width: 11px; }
+.star-picker { margin: 10px 0 25px; display: flex; justify-content: center; gap: 8px; }
+.star-picker button { padding: 0; border: 0; background: transparent; color: #445049; cursor: pointer; }
+.star-picker button.active { color: var(--lime); }
+.star-picker svg { width: 34px; height: 34px; fill: currentColor; }
+.receipt-modal { width: min(560px, 100%); }
+.receipt-brand { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; color: var(--lime); font: 800 24px 'Space Grotesk'; }
+.receipt-brand small { color: var(--muted); font: 500 10px Manrope; }
+.receipt-print dl { margin: 0 0 25px; }
+.receipt-print dl > div { padding: 10px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 20px; }
+.receipt-print dt { color: var(--muted); font-size: 10px; }
+.receipt-print dd { margin: 0; text-align: right; font-size: 11px; font-weight: 800; overflow-wrap: anywhere; }
+.receipt-print .receipt-total { padding-top: 18px; color: var(--lime); font-size: 18px; }
+
+/* Admin tools */
+.admin-filters { grid-template-columns: minmax(220px, 1fr) 190px 155px; }
+.checkbox-label { display: flex !important; align-items: center; gap: 10px; }
+.checkbox-label input { width: 17px; min-height: 17px; margin: 0; accent-color: var(--lime); }
+.message-state { width: fit-content; margin-bottom: 8px; padding: 4px 7px; border-radius: 20px; color: var(--muted); background: var(--surface-2); font-size: 8px; font-weight: 900; letter-spacing: .8px; }
+.message-state.new { color: var(--lime); background: rgba(207,255,70,.1); }
+.message-state.read { color: #8db9ff; background: rgba(78,135,220,.12); }
+.message-state.resolved { color: #79ba8e; background: rgba(72,160,99,.12); }
+.admin-note { margin: 15px 0; padding: 12px 14px; border-left: 2px solid var(--lime); background: var(--surface-2); color: var(--muted); font-size: 11px; line-height: 1.6; }
+.admin-note strong { display: block; margin-bottom: 3px; color: var(--ink); }
+.message-actions { display: flex; gap: 9px; }
+.message-actions .button { min-height: 39px; padding-inline: 13px; }
+.pitch-rating { margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; color: var(--lime); font-size: 11px; font-weight: 800; }
+.pitch-rating svg { width: 13px; height: 13px; fill: currentColor; }
+.pitch-rating small { color: var(--muted); font-size: 9px; }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .receipt-print, .receipt-print * { visibility: visible !important; }
+  .receipt-print { position: fixed; inset: 0; padding: 40px; background: #fff; color: #111; }
+  .receipt-print .receipt-brand { color: #234d35; }
+  .receipt-print dl > div { border-color: #ddd; }
+}
+
 /* Motion */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes logoOrbit { to { transform: rotate(360deg); } }
@@ -684,4 +746,20 @@ body { background: radial-gradient(circle at 86% 8%, rgba(86, 137, 79, .07), tra
 
 @media (max-width: 860px) {
   .pitch-board { left: 55px; }
+}
+
+@media (max-width: 680px) {
+  .booking-layout { grid-template-columns: minmax(0, 1fr); }
+  .booking-main, .booking-summary { min-width: 0; }
+  .availability-calendar { grid-template-columns: repeat(4, minmax(70px, 1fr)); overflow-x: auto; }
+  .availability-calendar button { min-height: 78px; }
+  .coupon-box, .booking-filters, .admin-filters { grid-template-columns: 1fr; }
+  .booking-card-actions, .message-actions { justify-content: flex-start; flex-wrap: wrap; }
+  .receipt-print dl > div { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .receipt-print dd { text-align: left; }
+}
+
+@media (max-width: 460px) {
+  .availability-calendar { grid-template-columns: repeat(7, 82px); }
+  .coupon-box .button { width: 100%; }
 }

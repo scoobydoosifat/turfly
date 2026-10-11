@@ -23,6 +23,13 @@ public class BookingController {
         return bookingService.availability(pitchId, date);
     }
 
+    @GetMapping("/availability-calendar")
+    public AvailabilityCalendarResponse availabilityCalendar(@RequestParam String pitchId,
+                                                               @RequestParam LocalDate startDate,
+                                                               @RequestParam(defaultValue = "7") int days) {
+        return bookingService.availabilityCalendar(pitchId, startDate, days);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponse create(@RequestBody @Valid CreateBookingRequest request, Authentication auth) {

@@ -21,14 +21,19 @@ public final class DtoMapper {
     }
 
     public static BookingResponse booking(Booking booking) {
+        var original = booking.getOriginalAmount() == null ? booking.getAmount() : booking.getOriginalAmount();
+        var discount = booking.getDiscountAmount() == null ? java.math.BigDecimal.ZERO : booking.getDiscountAmount();
         return new BookingResponse(booking.getId(), booking.getPitchId(), booking.getPitchName(),
-            booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), booking.getAmount(),
-            booking.getStatus(), booking.getPaymentStatus(), booking.getCustomerName(),
+            booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), original,
+            discount, booking.getAmount(), booking.getCouponCode(), booking.getStatus(), booking.getPaymentStatus(),
+            booking.getPaymentTransactionId(), booking.getCustomerName(),
             booking.getCustomerEmail(), booking.getCustomerPhone(), booking.getCreatedAt());
     }
 
     public static ContactResponse contact(ContactMessage message) {
         return new ContactResponse(message.getId(), message.getName(), message.getEmail(), message.getPhone(),
-            message.getSubject(), message.getMessage(), message.isResolved(), message.getCreatedAt());
+            message.getSubject(), message.getMessage(), message.isResolved(),
+            message.getStatus() == null ? (message.isResolved() ? com.turfly.enums.MessageStatus.RESOLVED : com.turfly.enums.MessageStatus.NEW) : message.getStatus(),
+            message.getAdminNote(), message.getCreatedAt());
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.*;
 import java.time.*;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final PitchService pitchService;
+    private final CouponService couponService;
 
     public AvailabilityResponse availability(String pitchId, LocalDate date) {
         pitchService.entity(pitchId);
@@ -32,6 +34,13 @@ public class BookingService {
             .map(start -> new SlotResponse(start, start.plusMinutes(90), isAvailable(pitchId, date, start)))
             .toList();
         return new AvailabilityResponse(pitchId, date, slots);
+    }
+
+    public AvailabilityCalendarResponse availabilityCalendar(String pitchId, LocalDate startDate, int days) {
+        if (days < 1 || days > 14) throw new BadRequestException("Calendar range must be between 1 and 14 days");
+        List<AvailabilityResponse> calendar = java.util.stream.IntStream.range(0, days)
+            .mapToObj(offset -> availability(pitchId, startDate.plusDays(offset))).toList();
+        return new AvailabilityCalendarResponse(pitchId, calendar);
     }
 
     @CacheEvict(value = "adminStats", allEntries = true)
@@ -42,8 +51,10 @@ public class BookingService {
         if (!isAvailable(pitch.getId(), request.bookingDate(), request.startTime()))
             throw new ConflictException("That time slot was just booked. Please choose another one");
 
-        BigDecimal amount = pitch.getPricePerHour().multiply(new BigDecimal("1.5"))
+        BigDecimal originalAmount = pitch.getPricePerHour().multiply(new BigDecimal("1.5"))
             .setScale(0, RoundingMode.HALF_UP);
+        CouponService.Discount discount = couponService.calculate(request.couponCode(), originalAmount);
+        BigDecimal amount = originalAmount.subtract(discount.amount());
         boolean adminBooking = user.getRole() == Role.ADMIN;
         Booking booking = Booking.builder()
             .userId(user.getId())
@@ -55,11 +66,34 @@ public class BookingService {
             .bookingDate(request.bookingDate())
             .startTime(request.startTime())
             .endTime(request.startTime().plusMinutes(90))
+            .originalAmount(originalAmount)
+            .discountAmount(discount.amount())
             .amount(amount)
+            .couponCode(discount.code())
             .status(adminBooking ? BookingStatus.CONFIRMED : BookingStatus.PENDING_PAYMENT)
             .paymentStatus(PaymentStatus.UNPAID)
             .paymentTransactionId(null)
             .paymentExpiresAt(adminBooking ? null : Instant.now().plusSeconds(1800))
+            .build();
+        return DtoMapper.booking(bookingRepository.save(booking));
+    }
+
+    @CacheEvict(value = "adminStats", allEntries = true)
+    public synchronized BookingResponse createManual(CreateManualBookingRequest request, User admin) {
+        Pitch pitch = pitchService.entity(request.pitchId());
+        if (!pitch.isActive()) throw new BadRequestException("This pitch is not accepting bookings");
+        if (!START_TIMES.contains(request.startTime())) throw new BadRequestException("Choose a valid time slot");
+        if (!isAvailable(pitch.getId(), request.bookingDate(), request.startTime()))
+            throw new ConflictException("That time slot is already booked");
+        BigDecimal amount = pitch.getPricePerHour().multiply(new BigDecimal("1.5"))
+            .setScale(0, RoundingMode.HALF_UP);
+        Booking booking = Booking.builder().userId(admin.getId())
+            .customerName(request.customerName().trim()).customerEmail(request.customerEmail().trim().toLowerCase())
+            .customerPhone(request.customerPhone().trim()).pitchId(pitch.getId()).pitchName(pitch.getName())
+            .bookingDate(request.bookingDate()).startTime(request.startTime()).endTime(request.startTime().plusMinutes(90))
+            .originalAmount(amount).discountAmount(BigDecimal.ZERO).amount(amount)
+            .status(BookingStatus.CONFIRMED).paymentStatus(request.paid() ? PaymentStatus.PAID : PaymentStatus.UNPAID)
+            .paymentTransactionId(request.paid() ? "ADMIN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase() : null)
             .build();
         return DtoMapper.booking(bookingRepository.save(booking));
     }
@@ -94,6 +128,7 @@ public class BookingService {
         booking.setPaymentStatus(PaymentStatus.PAID);
         booking.setStatus(BookingStatus.AWAITING_APPROVAL);
         booking.setPaymentExpiresAt(null);
+        countCoupon(booking);
         bookingRepository.save(booking);
     }
 
@@ -104,6 +139,7 @@ public class BookingService {
         booking.setPaymentStatus(PaymentStatus.PAID);
         booking.setStatus(BookingStatus.AWAITING_APPROVAL);
         booking.setPaymentExpiresAt(null);
+        countCoupon(booking);
         bookingRepository.save(booking);
     }
 
@@ -146,5 +182,11 @@ public class BookingService {
         if (slotDateTime.isBefore(now.toLocalDateTime())) return false;
         return !bookingRepository.existsByPitchIdAndBookingDateAndStartTimeAndStatusNot(
             pitchId, date, start, BookingStatus.CANCELLED);
+    }
+
+    private void countCoupon(Booking booking) {
+        if (booking.isCouponCounted() || booking.getCouponCode() == null) return;
+        couponService.markUsed(booking.getCouponCode());
+        booking.setCouponCounted(true);
     }
 }

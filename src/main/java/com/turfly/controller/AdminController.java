@@ -3,12 +3,16 @@ package com.turfly.controller;
 import com.turfly.dto.AdminDtos.AdminStatsResponse;
 import com.turfly.dto.AuthDtos.UserResponse;
 import com.turfly.dto.BookingDtos.BookingResponse;
+import com.turfly.dto.BookingDtos.CreateManualBookingRequest;
+import com.turfly.dto.CouponDtos.*;
 import com.turfly.dto.ContactDtos.ContactResponse;
+import com.turfly.dto.ContactDtos.MessageUpdateRequest;
 import com.turfly.dto.PitchDtos.*;
 import com.turfly.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +28,8 @@ public class AdminController {
     private final ContactService contactService;
     private final UserService userService;
     private final ImageStorageService imageStorageService;
+    private final CouponService couponService;
+    private final CurrentUser currentUser;
 
     @GetMapping("/stats")
     public AdminStatsResponse stats() {
@@ -33,6 +39,12 @@ public class AdminController {
     @GetMapping("/bookings")
     public List<BookingResponse> bookings() {
         return bookingService.all();
+    }
+
+    @PostMapping("/bookings/manual")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BookingResponse manualBooking(@RequestBody @Valid CreateManualBookingRequest request, Authentication auth) {
+        return bookingService.createManual(request, currentUser.from(auth));
     }
 
     @PutMapping("/bookings/{id}/confirm")
@@ -54,6 +66,29 @@ public class AdminController {
     public ContactResponse resolve(@PathVariable String id) {
         return contactService.resolve(id);
     }
+
+    @PutMapping("/messages/{id}")
+    public ContactResponse updateMessage(@PathVariable String id, @RequestBody @Valid MessageUpdateRequest request) {
+        return contactService.update(id, request);
+    }
+
+    @GetMapping("/coupons")
+    public List<CouponResponse> coupons() { return couponService.list(); }
+
+    @PostMapping("/coupons")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CouponResponse createCoupon(@RequestBody @Valid CouponRequest request) {
+        return couponService.create(request);
+    }
+
+    @PutMapping("/coupons/{id}")
+    public CouponResponse updateCoupon(@PathVariable String id, @RequestBody @Valid CouponRequest request) {
+        return couponService.update(id, request);
+    }
+
+    @DeleteMapping("/coupons/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCoupon(@PathVariable String id) { couponService.delete(id); }
 
     @GetMapping("/users")
     public List<UserResponse> users() {

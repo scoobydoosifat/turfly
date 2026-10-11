@@ -25,7 +25,11 @@ public class Booking {
     private LocalDate bookingDate;
     private LocalTime startTime;
     private LocalTime endTime;
+    private BigDecimal originalAmount;
+    private BigDecimal discountAmount;
     private BigDecimal amount;
+    private String couponCode;
+    private boolean couponCounted;
     private BookingStatus status;
     private PaymentStatus paymentStatus;
     private String paymentTransactionId;

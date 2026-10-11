@@ -1,5 +1,6 @@
 package com.turfly.model;
 
+import com.turfly.enums.MessageStatus;
 import lombok.*;
 import org.springframework.data.annotation.*;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,6 +21,11 @@ public class ContactMessage {
 
     @Builder.Default
     private boolean resolved = false;
+
+    @Builder.Default
+    private MessageStatus status = MessageStatus.NEW;
+
+    private String adminNote;
 
     @CreatedDate
     private Instant createdAt;

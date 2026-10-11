@@ -13,7 +13,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PitchRepository pitchRepository;
     private final BookingRepository bookingRepository;
-    private final ContactMessageRepository contactRepository;
+    private final ContactService contactService;
 
     @Cacheable(value = "adminStats", key = "'summary'")
     public AdminStatsResponse stats() {
@@ -22,7 +22,7 @@ public class AdminService {
             pitchRepository.count(),
             bookingRepository.count(),
             bookingRepository.countByStatus(BookingStatus.CONFIRMED),
-            contactRepository.countByResolvedFalse()
+            contactService.countNew()
         );
     }
 }
