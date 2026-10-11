@@ -4,6 +4,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -32,6 +33,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
     ResponseEntity<ApiError> badRequest(RuntimeException ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge(MaxUploadSizeExceededException ex) {
+        return error(HttpStatus.BAD_REQUEST, "Pitch images must be 8 MB or smaller");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

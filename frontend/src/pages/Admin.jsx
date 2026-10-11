@@ -63,6 +63,9 @@ export default function Admin() {
   }
   function chooseImage(event) {
     const file = event.target.files?.[0]; if (!file) return
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) { setNotice('Use a JPG, PNG or WEBP image.'); event.target.value = ''; return }
+    if (file.size > 8 * 1024 * 1024) { setNotice('Pitch images must be 8 MB or smaller.'); event.target.value = ''; return }
     if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
     setImageFile(file); setImagePreview(URL.createObjectURL(file))
   }
